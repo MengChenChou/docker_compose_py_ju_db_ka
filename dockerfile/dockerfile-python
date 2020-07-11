@@ -1,0 +1,21 @@
+FROM python:3.7
+
+# add project
+#ADD ./work_project /app #since we have to voluumes
+WORKDIR /app
+
+# install flask
+RUN pip install --upgrade pip
+RUN pip install Flask==1.0.2 requests line-bot-sdk PyMYSQL
+RUN pip install kafka pymysql pymongo
+
+# run flask
+#ENTRYPOINT ["python"]
+#CMD ["test_app.py"]
+
+#RUN /bin/bash -c 'python test_app.py'
+
+# run flask
+ENTRYPOINT ["python"]#like son process
+#CMD ["python app.py"]
+

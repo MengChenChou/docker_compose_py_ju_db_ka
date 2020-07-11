@@ -1,0 +1,103 @@
+version: '3'
+services:
+  python_env:
+    build:
+      context: ./dockerfile
+      dockerfile: dockerfile-python
+    container_name: python_env
+    tty: true
+    stdin_open: true
+    #ports:
+      #- "5000:5000"
+    #Developer use    
+    volumes:
+      #- ./web:/app/
+      - ./work_project:/app/
+    #command:
+      #- app.py
+  jupyter:
+    build:
+      context: ./dockerfile
+      dockerfile: dockerfile-jupyter
+    container_name: jupyter
+    hostname: jupyter
+    ports:
+      - "8888:8888"
+      - "5000:5000"
+    command: start-notebook.sh --NotebookApp.token=''
+    volumes:
+      #- ./jupyter:/home/jovyan/work
+      - ./work_project:/home/jovyan/work
+  MYSQL:
+    image: mysql:8.0
+    container_name: MYSQL
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=aabb1234
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+  mongo:
+    image: mongo
+    container_name: mongodb
+    hostname: mongodb
+    volumes:
+      - ./mongodb:/data/db
+    restart: always
+    expose:
+      - 6016
+    ports:
+      - "27017:27017"
+  adminmongo:
+    image: mrvautin/adminmongo
+    container_name: adminmongo
+    hostname: adminmongo
+    ports:
+      - "1234:1234"
+    environment:
+      - HOST=0.0.0.0
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.2.1
+    hostname: zookeeper
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka:
+    image: confluentinc/cp-kafka:5.2.1
+    hostname: kafka
+    container_name: kafka
+    restart: always
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      ## for local use
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://192.168.85.135:9092
+      ## for cloud use
+      # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://<cloud_host_ip>:9092
+      # advertised.host.name: <cloud_host_ip>
+  redis:
+    image: "redis:alpine"
+    hostname: redis
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server /usr/local/etc/redis/redis.conf  
+    volumes:
+      - $PWD/redis_file/redis_data:/var/lib/redis
+      - $PWD/redis_file/redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master    
+      
